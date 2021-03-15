@@ -73,11 +73,6 @@
   <ItemGroup>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Properties\Resources.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>Resources.resx</DependentUpon>
-    </Compile>
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
@@ -99,21 +94,6 @@
       <Generator>PublicResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\klk_32.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\klk_48.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\klk_64.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\klk_128.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\klk_256.png" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\klk_icon.ico" />
