@@ -46,7 +46,6 @@ namespace KeyLockKiller
 			Console.ForegroundColor = ConsoleColor.Black;
 #endif
 			Console.CursorVisible = false;
-			Process.GetCurrentProcess().PriorityClass = ProcessPriorityClass.BelowNormal;
 		}
 
 		[STAThread]
