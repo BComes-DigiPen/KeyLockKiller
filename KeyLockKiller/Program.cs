@@ -37,15 +37,15 @@ namespace KeyLockKiller
 	{
 		private static void Init()
 		{
-#if (DEBUG)
-			Console.Title = "[DEBUG] KeyLockKiller";
-			Console.ResetColor();
-#else
 			Console.Title = "KeyLockKiller (Press ESC to exit)";
-			Console.BackgroundColor = ConsoleColor.Black;
-			Console.ForegroundColor = ConsoleColor.Black;
+#if (DEBUG)
+			Console.Title = "[DEBUG] " + Console.Title;
 #endif
 			Console.CursorVisible = false;
+
+			// This should fix issues where the program wouldn't work / change key states when other
+			// applications or processes were active
+			Process.GetCurrentProcess().PriorityClass = ProcessPriorityClass.AboveNormal;
 		}
 
 		[STAThread]
@@ -88,8 +88,8 @@ namespace KeyLockKiller
 					PushKey(Keys.Scroll);
 				}
 
-				// Sleeping/pausing every 5 milliseconds significantly lowers CPU usage.
-				Thread.Sleep(5);
+				// Sleeping/pausing every 50 milliseconds significantly lowers CPU usage.
+				Thread.Sleep(50);
 
 				// Minimize memory usage with garbage collection, slightly increases CPU usage
 				MinimizeRAMUse();
