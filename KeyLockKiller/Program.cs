@@ -23,7 +23,7 @@
 // WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // Now, with that legal software licensing mumbo jumbo out of the way, here's the program's source,
-// in all of its unoptimized glory.
+// in all of its probably broken and unoptimized glory.
 
 using System;
 using System.Diagnostics;
@@ -37,14 +37,16 @@ namespace KeyLockKiller
 	{
 		private static void Init()
 		{
-			Console.Title = "KeyLockKiller (Press ESC to exit)";
+			Console.Title = "KeyLockKiller";
 #if (DEBUG)
-			Console.Title = "[DEBUG] " + Console.Title;
+			Console.Title += " [DEBUG]";
+#else
+			Console.Title += " (Press ESC to exit.)";
 #endif
 			Console.CursorVisible = false;
 
-			// This should fix issues where the program wouldn't work / change key states when other
-			// applications or processes were active
+			// This should fix issues where the program wouldn't work (change key states) when other
+			// applications or processes were active.
 			Process.GetCurrentProcess().PriorityClass = ProcessPriorityClass.AboveNormal;
 		}
 
@@ -67,7 +69,7 @@ namespace KeyLockKiller
 				{
 #if (DEBUG)
 					Console.Clear();
-					Console.Write("Caps Lock state changed to {0} reverting to {1}.", CapsOn(), initCaps);
+					Console.Write("Caps changed to {0}. Reverting to {1}.", CapsOn(), initCaps);
 #endif
 					PushKey(Keys.CapsLock);
 				}
@@ -75,7 +77,7 @@ namespace KeyLockKiller
 				{
 #if (DEBUG)
 					Console.Clear();
-					Console.Write("Num Lock state changed to {0}, reverting to {1}.", NumOn(), initNum);
+					Console.Write("Num changed to {0}. Reverting to {1}.", NumOn(), initNum);
 #endif
 					PushKey(Keys.NumLock);
 				}
@@ -83,7 +85,7 @@ namespace KeyLockKiller
 				{
 #if (DEBUG)
 					Console.Clear();
-					Console.Write("Scroll Lock state changed to {0}, reverting to {1}.", ScrollOn(), initScroll);
+					Console.Write("Scroll changed to {0}. Reverting to {1}.", ScrollOn(), initScroll);
 #endif
 					PushKey(Keys.Scroll);
 				}
@@ -91,7 +93,7 @@ namespace KeyLockKiller
 				// Sleeping/pausing every 50 milliseconds significantly lowers CPU usage.
 				Thread.Sleep(50);
 
-				// Minimize memory usage with garbage collection, slightly increases CPU usage
+				// Minimize RAM usage by calling on garbage collector, slightly increases CPU usage.
 				MinimizeRAMUse();
 			}
 			Environment.Exit(0);
@@ -100,7 +102,7 @@ namespace KeyLockKiller
 		private static void ResizeConsole()
 		{
 #if (DEBUG)
-			Console.SetWindowSize(55, 1);
+			Console.SetWindowSize(44, 1);
 #else
 			Console.SetWindowSize(42, 1);
 #endif
@@ -149,14 +151,12 @@ namespace KeyLockKiller
 		{
 			GC.Collect(GC.MaxGeneration);
 			GC.WaitForPendingFinalizers();
-			SetProcessWorkingSetSize(Process.GetCurrentProcess().Handle,
-				(UIntPtr)0xFFFFFFFF, (UIntPtr)0xFFFFFFFF);
+			SetProcessWorkingSetSize(Process.GetCurrentProcess().Handle, (UIntPtr)0xFFFFFFFF, (UIntPtr)0xFFFFFFFF);
 		}
 
 		[DllImport("kernel32.dll")]
 		[return: MarshalAs(UnmanagedType.Bool)]
-		private static extern bool SetProcessWorkingSetSize(IntPtr process,
-			UIntPtr minimumWorkingSetSize, UIntPtr maximumWorkingSetSize);
+		private static extern bool SetProcessWorkingSetSize(IntPtr process, UIntPtr minimumWorkingSetSize, UIntPtr maximumWorkingSetSize);
 
 		#endregion
 	}
