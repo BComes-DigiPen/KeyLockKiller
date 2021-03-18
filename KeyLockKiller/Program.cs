@@ -51,7 +51,7 @@ namespace KeyLockKiller
 			// more resource-intensive applications or processes were active.
 			Process.GetCurrentProcess().PriorityClass = ProcessPriorityClass.AboveNormal;
 
-			// We call this twice because calling it once doesn't make the console window have one line
+			// Call this twice because calling it once doesn't make the console show one line
 			ResizeConsole();
 			ResizeConsole();
 
