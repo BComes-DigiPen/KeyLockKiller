@@ -22,9 +22,6 @@
 // WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY
 // WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-// Now, with that legal software licensing mumbo jumbo out of the way, here's the program's source,
-// in all of its probably broken and unoptimized glory.
-
 using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
@@ -35,19 +32,30 @@ namespace KeyLockKiller
 {
 	internal class Program
 	{
+		#region Main Program Stuff
+
+		// Capture state of lock keys on program start
+		private static readonly bool[] initKeys = { CLOn(), NLOn(), SLOn() };
+
 		private static void Init()
 		{
 			Console.Title = "KeyLockKiller";
 #if (DEBUG)
-			Console.Title += " [DEBUG]";
+			Console.Title += " [DEBUG | " + Convert.ToInt32(initKeys[0]) + ", " + Convert.ToInt32(initKeys[1]) + ", " + Convert.ToInt32(initKeys[2]) + ']';
 #else
 			Console.Title += " (Press ESC to exit.)";
 #endif
 			Console.CursorVisible = false;
 
 			// This should fix issues where the program wouldn't work (change key states) when other
-			// applications or processes were active.
+			// more resource-intensive applications or processes were active.
 			Process.GetCurrentProcess().PriorityClass = ProcessPriorityClass.AboveNormal;
+
+			// We call this twice because calling it once doesn't make the console window have one line
+			ResizeConsole();
+			ResizeConsole();
+
+			NoResizeOrMax();
 		}
 
 		[STAThread]
@@ -55,48 +63,79 @@ namespace KeyLockKiller
 		{
 			Init();
 
-			// Capture state of lock keys when program starts.
-			bool initCaps = CapsOn();
-			bool initNum = NumOn();
-			bool initScroll = ScrollOn();
-
 			// Loop until ESC is pressed while the window is in focus.
 			while (!(Console.KeyAvailable && Console.ReadKey(true).Key == ConsoleKey.Escape))
 			{
-				ResizeConsole();
+				CallGC();
 
-				if (CapsOn() != initCaps)
+				bool[] currKeys = { CLOn(), NLOn(), SLOn() };
+				if (currKeys[0] != initKeys[0])
 				{
 #if (DEBUG)
 					Console.Clear();
-					Console.Write("Caps changed to {0}. Reverting to {1}.", CapsOn(), initCaps);
+					Console.Write("Caps changed to {0}. Reverting to {1}.", currKeys[0], initKeys[0]);
 #endif
-					PushKey(Keys.CapsLock);
+					KeyIn(Keys.CapsLock);
 				}
-				else if (NumOn() != initNum)
+				if (currKeys[1] != initKeys[1])
 				{
 #if (DEBUG)
 					Console.Clear();
-					Console.Write("Num changed to {0}. Reverting to {1}.", NumOn(), initNum);
+					Console.Write("Num changed to {0}. Reverting to {1}.", currKeys[1], initKeys[1]);
 #endif
-					PushKey(Keys.NumLock);
+					KeyIn(Keys.NumLock);
 				}
-				else if (ScrollOn() != initScroll)
+				if (currKeys[2] != initKeys[2])
 				{
 #if (DEBUG)
 					Console.Clear();
-					Console.Write("Scroll changed to {0}. Reverting to {1}.", ScrollOn(), initScroll);
+					Console.Write("Scroll changed to {0}. Reverting to {1}.", currKeys[2], initKeys[2]);
 #endif
-					PushKey(Keys.Scroll);
+					KeyIn(Keys.Scroll);
 				}
 
 				// Sleeping/pausing every 50 milliseconds significantly lowers CPU usage.
 				Thread.Sleep(50);
-
-				// Minimize RAM usage by calling on garbage collector, slightly increases CPU usage.
-				MinimizeRAMUse();
 			}
 			Environment.Exit(0);
+		}
+
+		#endregion
+
+		#region Memory Optimization Functions
+
+		private static void CallGC()
+		{
+			GC.Collect(GC.MaxGeneration);
+			GC.WaitForPendingFinalizers();
+			SetProcessWorkingSetSize(Process.GetCurrentProcess().Handle, (UIntPtr)0xFFFFFFFF, (UIntPtr)0xFFFFFFFF);
+		}
+
+		[DllImport("kernel32.dll")]
+		private static extern bool SetProcessWorkingSetSize(IntPtr process, UIntPtr minimumWorkingSetSize, UIntPtr maximumWorkingSetSize);
+
+		#endregion
+
+		#region Console Window Functions
+
+		[DllImport("user32.dll")]
+		private static extern int DeleteMenu(IntPtr hMenu, uint nPosition = 61440, uint wFlags = 0);
+
+		[DllImport("kernel32.dll")]
+		private static extern IntPtr GetConsoleWindow();
+
+		[DllImport("user32.dll")]
+		private static extern IntPtr GetSystemMenu(IntPtr hWnd, bool bRevert = false);
+
+		private static void NoResizeOrMax()
+		{
+			IntPtr handle = GetConsoleWindow();
+			IntPtr sysMenu = GetSystemMenu(handle);
+			if (handle != IntPtr.Zero)
+			{
+				DeleteMenu(sysMenu);
+				DeleteMenu(sysMenu, 61488);
+			}
 		}
 
 		private static void ResizeConsole()
@@ -106,57 +145,40 @@ namespace KeyLockKiller
 #else
 			Console.SetWindowSize(42, 1);
 #endif
-			try
-			{
-				Console.SetBufferSize(Console.WindowWidth, Console.WindowHeight);
-			}
-			catch { }
+			Console.SetBufferSize(Console.WindowWidth, Console.WindowHeight);
 		}
 
-		#region Helper Functions For Key State Checking
+		#endregion
 
-		private static bool CapsOn()
+		#region Keyboard Input Functions
+
+		[DllImport("user32.dll")]
+		private static extern void keybd_event(byte bVk, byte bScan = 69, uint dwFlags = 1, uint dwExtraInfo = 0);
+
+		private static void KeyIn(Keys k)
+		{
+			keybd_event((byte)k);
+			keybd_event((byte)k, 69, 3);
+		}
+
+		#endregion
+
+		#region Key State Check Functions
+
+		private static bool CLOn()
 		{
 			return Control.IsKeyLocked(Keys.CapsLock);
 		}
 
-		private static bool NumOn()
+		private static bool NLOn()
 		{
 			return Control.IsKeyLocked(Keys.NumLock);
 		}
 
-		private static bool ScrollOn()
+		private static bool SLOn()
 		{
 			return Control.IsKeyLocked(Keys.Scroll);
 		}
-
-		#endregion
-
-		#region Keyboard Input Stuff (From some StackOverflow/Exchange thing, I forget where.)
-
-		[DllImport("user32.dll")]
-		private static extern void keybd_event(byte bVk, byte bScan, uint dwFlags, uint dwExtraInfo = 0);
-
-		private static void PushKey(Keys keyCode)
-		{
-			keybd_event((byte)keyCode, 0x45, 0x1);
-			keybd_event((byte)keyCode, 0x45, 0x1 | 0x2);
-		}
-
-		#endregion
-
-		#region Memory Optimization Stuff (From another StackOverflow/Exchange thing, I also forget where.)
-
-		private static void MinimizeRAMUse()
-		{
-			GC.Collect(GC.MaxGeneration);
-			GC.WaitForPendingFinalizers();
-			SetProcessWorkingSetSize(Process.GetCurrentProcess().Handle, (UIntPtr)0xFFFFFFFF, (UIntPtr)0xFFFFFFFF);
-		}
-
-		[DllImport("kernel32.dll")]
-		[return: MarshalAs(UnmanagedType.Bool)]
-		private static extern bool SetProcessWorkingSetSize(IntPtr process, UIntPtr minimumWorkingSetSize, UIntPtr maximumWorkingSetSize);
 
 		#endregion
 	}
