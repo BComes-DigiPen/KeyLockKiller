@@ -55,7 +55,7 @@ namespace KeyLockKiller
 			ResizeConsole();
 			ResizeConsole();
 
-			NoResizeOrMax();
+			NoResize();
 		}
 
 		[STAThread]
@@ -127,7 +127,7 @@ namespace KeyLockKiller
 		[DllImport("user32.dll")]
 		private static extern IntPtr GetSystemMenu(IntPtr hWnd, bool bRevert = false);
 
-		private static void NoResizeOrMax()
+		private static void NoResize()
 		{
 			IntPtr handle = GetConsoleWindow();
 			IntPtr sysMenu = GetSystemMenu(handle);
